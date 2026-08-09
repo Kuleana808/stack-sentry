@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Stack Sentry
 
-## Getting Started
+Monitoring and agentic repair for SMB automation stacks — Zapier, Make, n8n, and
+raw webhooks. We watch the automations a business runs on, alert when they break,
+draft a fix, and apply it once a human approves. Flat monthly retainer with a
+guaranteed repair window.
 
-First, run the development server:
+$299 / $499 / $999 per month · 4 / 2 / 1-hour SLA.
+
+## Quick start
 
 ```bash
+npm install
+cp .env.example .env.local     # then fill it in
+openssl rand -base64 32        # -> STACK_SENTRY_MASTER_KEY, as k1:<value>
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+```bash
+npm run typecheck
+npm run lint
+npm run test
+npm run build
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Layout
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/app/          routes — marketing, auth, dashboard, admin, api
+src/lib/
+  crypto/         envelope encryption + secret redaction for OAuth tokens
+  llm/            local-first router (Ollama -> Haiku), cloud-tag guard
+  supabase/       browser / server / service-role clients
+  plans.ts        the three tiers, single source of truth
+supabase/
+  migrations/     schema, RLS, the approval constraint
+  functions/      Edge Functions (5-min poll, alerting)
+worker/           local Ollama-first repair worker
+tests/            vitest
+docs/             ARCHITECTURE.md, ROADMAP.md
+```
 
-## Learn More
+## Three things that are load-bearing
 
-To learn more about Next.js, take a look at the following resources:
+**Credentials are never plaintext.** Per-customer AES-256-GCM data key, wrapped
+by a master key that lives only in the environment. `connection_secrets` and
+`customer_keys` run RLS with zero policies — deny-all for anon and authenticated,
+service role only. Provider error bodies are redacted before they are stored,
+emailed, or shown to a model.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**No repair applies without human approval.** Enforced as a CHECK constraint, not
+a code path: a row cannot reach `applied` without `approved_by` and `approved_at`.
+The agent proposes; the customer approves; then we apply.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Local-first, not local-only.** Ollama drafts repairs by default. Anthropic Haiku
+is the escape hatch when local would degrade UX or is unreachable. Every routing
+decision writes an audit row, so the mix is a query rather than a claim — and
+because Supabase Edge Functions physically cannot reach `localhost:11434`, the
+Ollama-first path lives in a local worker instead of the cron function. See
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-## Deploy on Vercel
+## Contributing
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Small PRs. `-claude` suffix on dev branches. `--force-with-lease` only. `main` is
+protected — PR-only merges, green CI required.
