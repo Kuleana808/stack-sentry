@@ -1,0 +1,30 @@
+# Ownership split. Contracts are the interface — see docs/api-contracts.md.
+#
+# Claude Code: backend, API, data, security, shared logic.
+# Codex: presentation layer.
+#
+# Neither side pushes across the line without an explicit contract change.
+
+# --- Codex: presentation layer -------------------------------------------
+apps/web/src/components/**
+apps/web/src/app/(marketing)/**
+apps/web/src/app/(auth)/**
+apps/web/src/app/dashboard/**
+apps/web/src/app/globals.css
+apps/web/src/app/layout.tsx
+apps/web/src/app/fonts/**
+apps/web/tailwind.config.ts
+apps/web/postcss.config.mjs
+
+# --- Claude Code: everything with a contract or a credential in it --------
+# Listed after the Codex block so the more specific rules win.
+apps/web/src/app/api/**
+apps/web/src/app/auth/callback/**
+apps/web/src/middleware.ts
+apps/web/src/lib/stripe.ts
+apps/web/src/lib/supabase/**
+packages/core/**
+supabase/**
+worker/**
+docs/api-contracts.md
+.github/**

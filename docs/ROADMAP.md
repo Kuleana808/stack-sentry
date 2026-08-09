@@ -1,8 +1,17 @@
 # MVP roadmap
 
-4 weeks. Brent is customer #1. Kill signal is pre-committed: **day 28 post-launch,
-fewer than 5 paying stacks monitored OR more than 2 SLA misses per customer per
-month → kill.**
+4 weeks. Brent is customer #1.
+
+**Iteration trigger (pre-committed):** day 28 post-launch, if fewer than 5 paying
+stacks are monitored OR there are more than 2 SLA misses per customer per month,
+**pause the build**, report the specific miss and the underlying cause, surface
+iteration options (pivot the ICP, re-price, swap the platform focus, re-position),
+and ask Brent to decide: iterate / pivot / park / kill.
+
+Same measurement bar as before, different action at the trigger. The threshold
+forces honest measurement; it does not decide anything. Never auto-kill, never
+assume kill is the answer, and never tear down infrastructure, close PRs, or ship
+shutdown messaging without Brent saying so explicitly.
 
 Small PRs, `-claude` branch suffix, `--force-with-lease` only, green CI to merge.
 
