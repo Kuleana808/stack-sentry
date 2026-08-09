@@ -7,6 +7,12 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
   },
   resolve: {
-    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // `server-only` throws on import outside a React Server Component. Under
+      // vitest there is no RSC boundary, so it is stubbed out; the guard still
+      // does its job in the real Next build.
+      'server-only': fileURLToPath(new URL('./tests/stubs/server-only.ts', import.meta.url)),
+    },
   },
 })
