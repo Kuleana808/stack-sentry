@@ -23,41 +23,16 @@ Small PRs, `-claude` branch suffix, `--force-with-lease` only, green CI to merge
   RLS, envelope encryption for OAuth tokens, LLM router (Ollama-first with the
   `[:-]cloud$` guard), plan definitions, CI, 25 tests.
 
-## PR #1 — `marketing-auth-stripe-claude` (open)
-
-Marketing site, magic-link auth, Stripe checkout for the three tiers.
+- **PR #1 `marketing-auth-stripe-claude`** — marketing site, magic-link auth,
+  Stripe checkout. Merged.
+- **PR #2 `monorepo-contracts-claude`** — monorepo split for the Codex boundary,
+  the 5-state contract envelope, contracts 1–3. Merged.
+- **PR #3 `failure-detection-claude`** — contracts 4–5, the detection rules, the
+  Zapier adapter, and the 5-minute poll cron. Open.
 
 ---
 
-## Next three PRs
-
-### PR #2 — `zapier-connect-claude`
-
-Zapier OAuth connect flow, credential sealing, automation discovery.
-
-- `/api/oauth/zapier/start` + `/callback`, `state` param signed and single-use
-- On callback: mint the customer DEK if absent, seal access + refresh tokens,
-  write `connections` + `connection_secrets` in one transaction
-- Discover Zaps into `automations`; first sync doubles as the instant
-  stack-health audit that delivers TTFV in under 5 minutes
-- Token refresh path with `reauth_required` status when refresh fails
-- Tests: state forgery rejected, tokens never land in `connections`, refresh
-  rotates ciphertext, revoked connection stops polling
-
-Blocked on: Zapier developer-platform OAuth client credentials.
-
-### PR #3 — `failure-detection-claude`
-
-The 5-minute cron and the incident state machine.
-
-- Supabase Edge Function `poll-zapier`, scheduled via `pg_cron`
-- Parse execution logs → `executions`, redacting before insert
-- Open an incident when consecutive failures cross the customer's threshold;
-  stamp `sla_due_at` from the plan at open time (never retroactively loosened)
-- Auto-resolve on a subsequent success; compute `sla_met`
-- Enqueue a `draft` repair proposal per new incident
-- Tests: threshold boundary, one-open-incident-per-automation invariant,
-  SLA clock frozen against plan changes, poll idempotency on replayed pages
+## Next up
 
 ### PR #4 — `repair-worker-claude`
 
@@ -90,3 +65,5 @@ connectors · corpus → SEO pages.
 | Brand accent | Signal green `hsl(158 64% 38%)`, matching the operator green accent | Confirm or swap |
 | Next.js version | **16.3.0**, not 14 — every 14.x release carries unpatched advisories | Confirm |
 | Twilio SMS | Wired but dark until revenue | Confirm |
+| Zapier run-history API | Adapter written but **unverified** — endpoints guessed, `verified: false`, poller reports `fallback_reason` on every run | Developer credentials so it can be exercised for real |
+| `STACK_SENTRY_OAUTH_STATE_SECRET` | Not set — connect flow refuses to start without it | Generate + set in prod |

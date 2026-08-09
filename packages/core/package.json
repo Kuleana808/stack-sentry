@@ -14,7 +14,11 @@
     "./llm/ollama": "./src/llm/ollama.ts",
     "./supabase": "./src/supabase/admin.ts",
     "./oauth": "./src/oauth/state.ts",
-    "./credentials": "./src/credentials.ts"
+    "./credentials": "./src/credentials.ts",
+    "./detection": "./src/detection.ts",
+    "./pagination": "./src/pagination.ts",
+    "./providers": "./src/providers/types.ts",
+    "./providers/zapier": "./src/providers/zapier.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
