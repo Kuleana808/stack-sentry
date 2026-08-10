@@ -8,11 +8,11 @@ without an explicit change to this document.
 
 | # | Contract | Status | Lands in |
 |---|---|---|---|
-| 1 | `POST /api/auth/magic-link` | ✅ | this PR |
-| 2 | `POST /api/integrations/zapier/connect` | ✅ | this PR |
-| 3 | `GET /api/integrations/zapier/callback` | ✅ | this PR |
-| 4 | `GET /api/stacks/:id/health` | 🟡 | PR #3 |
-| 5 | `GET /api/stacks/:id/failures` | 🟡 | PR #3 |
+| 1 | `POST /api/auth/magic-link` | ✅ | PR #2 |
+| 2 | `POST /api/integrations/zapier/connect` | ✅ | PR #2 |
+| 3 | `GET /api/integrations/zapier/callback` | ✅ | PR #2 |
+| 4 | `GET /api/stacks/:id/health` | ✅ | PR #3 |
+| 5 | `GET /api/stacks/:id/failures` | ✅ | PR #3 |
 | 6 | `POST /api/repairs/:failure_id/propose` | 🟡 | PR #4 |
 | 7 | `POST /api/repairs/:proposal_id/approve` | 🟡 | PR #4 |
 | 8 | `POST /api/repairs/:proposal_id/apply` | 🟡 | PR #4 |
@@ -23,6 +23,15 @@ A 🟡 endpoint that is called returns a real envelope with
 `fallback_reason: "not implemented yet — planned in PR #N"` and `data: null`.
 It never returns plausible placeholder data. Build the UI against the shape; the
 state field tells you truthfully whether it is live.
+
+### One live caveat you will see on contract 4
+
+The Zapier adapter is **unverified** — its run-history endpoints have not been
+exercised against a real Zapier account yet, because that needs developer
+credentials we do not have. So `/health` can come back populated *and* carry a
+`fallback_reason` saying counts may be incomplete. That is intentional: a
+monitoring dashboard that renders "0 failures" because a request 404'd is worse
+than one that says it could not check. Render the reason when it is present.
 
 ---
 
@@ -132,7 +141,7 @@ outcome is in the query string of the destination.
 
 Destination is the `next` from step 2, sanitised.
 
-## 4. `GET /api/stacks/:id/health` 🟡 PR #3
+## 4. `GET /api/stacks/:id/health` ✅
 
 Dashboard payload for one connected stack.
 
@@ -159,7 +168,7 @@ Dashboard payload for one connected stack.
 `configured: false` when the customer has no connection yet — that is the
 onboarding empty state, not an error.
 
-## 5. `GET /api/stacks/:id/failures` 🟡 PR #3
+## 5. `GET /api/stacks/:id/failures` ✅
 
 Paginated failure log. Query: `?limit=50&cursor=<opaque>&automation_id=<uuid>`.
 
