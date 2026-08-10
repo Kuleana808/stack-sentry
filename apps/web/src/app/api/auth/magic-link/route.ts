@@ -5,6 +5,7 @@ import {
   notConfigured,
   failed,
   safeNext,
+  captureAsync,
   type MagicLinkResult,
 } from '@stack-sentry/core'
 import { createClient } from '@/lib/supabase/server'
@@ -65,6 +66,14 @@ export async function POST(request: Request) {
       { status: 502 },
     )
   }
+
+  // Funnel step. Paired with `magic_link_confirmed` in the callback so the
+  // drop between "asked for a link" and "clicked it" is measurable.
+  captureAsync({
+    event: 'magic_link_requested',
+    distinctId: email,
+    properties: { redirect_after: next },
+  })
 
   return NextResponse.json(
     liveVerified<MagicLinkResult>({ sent: true, email, redirect_after: next }),

@@ -81,7 +81,11 @@ export default function HomePage() {
               <div className="mt-3 text-sm text-muted-foreground">
                 {plan.stackLimit === null ? 'Unlimited automations' : `Up to ${plan.stackLimit} automations`}
                 {' · '}
-                {plan.slaHours}-hour repair SLA
+                {/* Forced by the plan-shape change: `slaHours` -> `responseTargetHours`.
+                    v0.1 advertises a response target, matching incumbents; the
+                    SLA-backed guarantee is v0.2, gated on data. Wording is
+                    Codex's to finalise in the repositioning pass. */}
+                {plan.responseTargetHours}-hour response target
               </div>
             </Link>
           ))}

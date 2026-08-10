@@ -18,7 +18,9 @@
     "./detection": "./src/detection.ts",
     "./pagination": "./src/pagination.ts",
     "./providers": "./src/providers/types.ts",
-    "./providers/zapier": "./src/providers/zapier.ts"
+    "./providers/zapier": "./src/providers/zapier.ts",
+    "./analytics": "./src/analytics.ts",
+    "./experiments": "./src/experiments.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

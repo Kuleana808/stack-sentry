@@ -5,6 +5,7 @@ import {
   liveVerified,
   notConfigured,
   failed,
+  captureAsync,
   type CheckoutResult,
 } from '@stack-sentry/core'
 import { createClient } from '@/lib/supabase/server'
@@ -73,6 +74,14 @@ export async function POST(request: Request) {
         { status: 502 },
       )
     }
+
+    // `checkout_started`, not `checkout_completed`. Completion is only ever
+    // established by the verified webhook.
+    captureAsync({
+      event: 'checkout_started',
+      distinctId: user.id,
+      properties: { plan, period },
+    })
 
     return NextResponse.json(
       liveVerified<CheckoutResult>({

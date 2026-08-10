@@ -5,6 +5,7 @@ import {
   notConfigured,
   failed,
   safeNext,
+  captureAsync,
   type ZapierConnectResult,
 } from '@stack-sentry/core'
 import { createOAuthState, OAUTH_STATE_COOKIE, OAUTH_STATE_TTL_MS } from '@stack-sentry/core/oauth'
@@ -76,6 +77,13 @@ export async function POST(request: Request) {
   authorizeUrl.searchParams.set('response_type', 'code')
   authorizeUrl.searchParams.set('scope', SCOPES.join(' '))
   authorizeUrl.searchParams.set('state', state)
+
+  captureAsync({
+    event: 'onboarding_connect_started',
+    distinctId: user.id,
+    customerId: membership.customer_id,
+    properties: { provider: 'zapier' },
+  })
 
   const response = NextResponse.json(
     liveVerified<ZapierConnectResult>({
