@@ -4,7 +4,14 @@ The interface between Claude Code (backend) and Codex (UI). Claude Code produces
 these shapes; Codex consumes them. Neither side pushes work across the line
 without an explicit change to this document.
 
-**Status legend:** ✅ implemented · 🟡 shape frozen, implementation in a later PR
+**Status legend:** ✅ implemented · 🟡 shape frozen, implementation in a later PR ·
+⏸️ shape frozen, deferred to v0.2 pending cohort data
+
+> **v0.1 is alerting parity.** Per the parity-before-divergence doctrine, v0.1
+> matches what Zapier-expert agencies already do — monitoring, alerting,
+> consultant-driven fixes. The agentic-repair contracts (6–8) keep their frozen
+> shapes but ship in **v0.2, gated on data showing customers want it**. Do not
+> build UI that assumes automated repair exists yet.
 
 | # | Contract | Status | Lands in |
 |---|---|---|---|
@@ -13,11 +20,12 @@ without an explicit change to this document.
 | 3 | `GET /api/integrations/zapier/callback` | ✅ | PR #2 |
 | 4 | `GET /api/stacks/:id/health` | ✅ | PR #3 |
 | 5 | `GET /api/stacks/:id/failures` | ✅ | PR #3 |
-| 6 | `POST /api/repairs/:failure_id/propose` | 🟡 | PR #4 |
-| 7 | `POST /api/repairs/:proposal_id/approve` | 🟡 | PR #4 |
-| 8 | `POST /api/repairs/:proposal_id/apply` | 🟡 | PR #4 |
+| 6 | `POST /api/repairs/:failure_id/propose` | ⏸️ | **v0.2 — gated on data** |
+| 7 | `POST /api/repairs/:proposal_id/approve` | ⏸️ | **v0.2 — gated on data** |
+| 8 | `POST /api/repairs/:proposal_id/apply` | ⏸️ | **v0.2 — gated on data** |
 | 9 | `POST /api/stripe/checkout` | ✅ | PR #1 |
 | 10 | `POST /api/stripe/webhook` | ✅ | PR #1 |
+| 11 | `GET /api/experiments` | ✅ | PR #4 |
 
 A 🟡 endpoint that is called returns a real envelope with
 `fallback_reason: "not implemented yet — planned in PR #N"` and `data: null`.
@@ -191,7 +199,7 @@ Paginated failure log. Query: `?limit=50&cursor=<opaque>&automation_id=<uuid>`.
 `error_message` is already redacted server-side — provider logs echo bearer
 tokens, so it is scrubbed before storage. Render it as-is.
 
-## 6. `POST /api/repairs/:failure_id/propose` 🟡 PR #4
+## 6. `POST /api/repairs/:failure_id/propose` ⏸️ v0.2
 
 Asks the repair agent to draft a fix. Idempotent per incident: calling twice
 returns the existing proposal rather than drafting a second one.
@@ -213,7 +221,7 @@ When the frontier fallback was used, `fallback_reason` explains why
 (`local_unavailable`, `runtime_cannot_reach_ollama`). Surface the tier honestly;
 do not hide which model wrote a fix.
 
-## 7. `POST /api/repairs/:proposal_id/approve` 🟡 PR #4
+## 7. `POST /api/repairs/:proposal_id/approve` ⏸️ v0.2
 
 Records the human approval. Accepts either an authenticated session or a
 single-use magic token from the alert email.
@@ -233,7 +241,7 @@ Errors: `401 unauthenticated` · `403 token_invalid` · `409 already_resolved` �
 `approved_by` and `approved_at` are stamped together, server-side. There is no
 client-writable path to this — RLS has no UPDATE policy on `repair_proposals`.
 
-## 8. `POST /api/repairs/:proposal_id/apply` 🟡 PR #4
+## 8. `POST /api/repairs/:proposal_id/apply` ⏸️ v0.2
 
 Applies an already-approved repair.
 
@@ -277,6 +285,63 @@ Handles `checkout.session.completed`, `customer.subscription.updated`,
 retries rather than dropping the event.
 
 **This is the only place a subscription becomes real.**
+
+## 11. `GET /api/experiments` ✅
+
+Variant assignment for the current visitor, plus the pricing ladder that follows
+from it. Anonymous-safe — mints and sets an `ss_vid` cookie when absent.
+
+```jsonc
+{ "data": {
+    "visitor_id": "…",
+    "assignments": [
+      { "experiment": "pricing_tiers",    "variant": "lower_entry" },
+      { "experiment": "homepage_headline", "variant": "control" }
+    ],
+    "pricing_monthly": { "starter": 199, "standard": 449, "pro": 999 } } }
+```
+
+**Render `pricing_monthly`, not `PLANS[id].monthly`.** The static plan table is
+the control ladder; showing it to everyone means the pricing test measures
+nothing.
+
+Assignment is a pure hash of (visitor id, experiment key) — no database work, so
+this is safe on the marketing critical path. Same visitor always gets the same
+variant. The visitor id is random and carries no personal data.
+
+**Record `experiment_exposed` when a variant is actually rendered.** Assignment
+is not exposure; counting an assignment nobody saw biases every result computed
+from it.
+
+---
+
+## Instrumentation
+
+Doctrine: no feature ships without a hypothesis and a metric, and instrumentation
+ships before feature #1. The event taxonomy is a closed union in
+`@stack-sentry/core` (`packages/core/src/analytics.ts`) — a typo is a build
+error, not a silent hole in a funnel.
+
+Server-side events are already emitted for `magic_link_requested`,
+`onboarding_connect_started`, `checkout_started`, `checkout_completed`,
+`subscription_started`, `subscription_upgraded`, `subscription_downgraded` and
+`subscription_cancelled`.
+
+Client-side events are Codex's to emit. The ones the brief names as decisions
+we need to make:
+
+| Question | Events that answer it |
+|---|---|
+| Which onboarding step drops sign-ups | `signup_started` → `magic_link_requested` → `magic_link_confirmed` → `onboarding_connect_started` → `onboarding_connect_authorized` → `onboarding_first_sync_completed` → `onboarding_completed` |
+| Tier conversion | `pricing_viewed` → `checkout_started` → `checkout_completed` |
+| Which pricing performs | `experiment_exposed` (pricing_tiers) joined to `checkout_completed` |
+| Which headline performs | `experiment_exposed` (homepage_headline) joined to `signup_started` |
+| Which alert types drive churn | `alert_sent` joined to `subscription_cancelled` |
+
+Use the visitor id from contract 11 as `distinct_id` before sign-in so a funnel
+survives sign-up. `checkout_completed` is emitted server-side from the verified
+webhook only — do not also emit it from the success-URL redirect, or every
+abandoned-but-returned session double-counts as revenue.
 
 ---
 

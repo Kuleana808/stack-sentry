@@ -1,9 +1,25 @@
-# MVP roadmap
+# Roadmap
 
-4 weeks. Brent is customer #1.
+**v0.1 is an alerting-parity clone.** Parity before divergence: we match what
+Zapier-expert agencies already do — monitoring, alerting, consultant-driven
+fixes, retainer-plus-hourly pricing, weekly reporting, one-off audit and
+migration services. Original from day one: brand, marketing site, docs voice.
+
+**The agentic-repair + response-guarantee differentiation is v0.2, gated on
+data** showing customers want it — not on our conviction that they will. Every
+deviation from parity has to be justified by cohort data from a live A/B test.
+
+Live service from launch: 5–10 paying customers, weekly iteration on interviews
+plus telemetry. There is no "1.0".
+
+No feature ships without a hypothesis and a metric. Instrumentation shipped
+before feature #1.
+
+Brent is customer #1.
 
 **Iteration trigger (pre-committed):** day 28 post-launch, if fewer than 5 paying
-stacks are monitored OR there are more than 2 SLA misses per customer per month,
+stacks are monitored OR there are more than 2 response-target misses per customer
+per month,
 **pause the build**, report the specific miss and the underlying cause, surface
 iteration options (pivot the ICP, re-price, swap the platform focus, re-position),
 and ask Brent to decide: iterate / pivot / park / kill.
@@ -34,26 +50,38 @@ Small PRs, `-claude` branch suffix, `--force-with-lease` only, green CI to merge
 
 ## Next up
 
-### PR #4 — `repair-worker-claude`
+### PR #5 — `alerting-parity-claude` (next)
 
-The local Ollama-first worker and the approval queue.
+The v0.1 core. What the incumbents do, matched.
 
-- `worker/` Node process claiming `draft` proposals with `FOR UPDATE SKIP LOCKED`
-- Prompt assembled from redacted execution log + matching `failure_fix_corpus`
-  entries; routes Ollama → Haiku, writes `llm_router_audit`
-- Moves proposals to `awaiting_approval`, emails a single-use magic approval link
-- Approve/reject route stamps `approved_by` + `approved_at` together
-- Corpus write-back on confirmed fix
-- Tests: no `applied` row without approval evidence, expired and replayed tokens
-  rejected, routing audit written on both tiers, worker-down leaves SLA visible
+- Email (Resend), Slack (incoming webhook), SMS (Twilio, wired but dark until
+  revenue justifies the spend)
+- Per-automation threshold overrides on top of the per-customer default
+- Quiet hours honoured, with a break-glass for a total-stack outage
+- Per-incident report on open and on resolve
+- Weekly stack-health digest
+- `alert_sent` / `alert_suppressed` / `alert_failed` carry channel and reason so
+  "which alert types drive churn" is a join, not a guess
+
+### PR #6 — `reporting-and-addons-claude`
+
+- Monthly review export
+- Add-on requests (audit, migration, consolidation) — the incumbent motion for
+  landing a client not ready for a retainer
+- Admin dashboard: active customers, stack count, response-target record,
+  add-on queue
 
 ---
 
-## Then
+## v0.2 — gated on data, not on conviction
 
-Stack health dashboard · alerting thresholds + quiet hours · admin dashboard
-(active customers, stack count, SLA compliance, repair queue) · Make + n8n
-connectors · corpus → SEO pages.
+Ships only once v0.1 telemetry says customers want it.
+
+- **Agentic repair** (contracts 6–8): local Ollama-first worker, human-approved
+  queue, corpus write-back. Shapes are frozen; timing is not committed.
+- **Response guarantee**: promoted from target to guarantee only once measured
+  repair time actually beats a human consultant's.
+- **Make + n8n + webhooks**: added when the Zapier-only cohort shows demand.
 
 ---
 

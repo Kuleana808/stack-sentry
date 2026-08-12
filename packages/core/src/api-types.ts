@@ -72,6 +72,11 @@ export interface StackHealthResult {
   open_incidents: number
   /** Drives the approval-queue badge. */
   awaiting_approval: number
+  /**
+   * v0.1: a response *target*, matching what incumbents advertise — not a
+   * guaranteed SLA with a remedy. The guarantee is v0.2, gated on data. Field
+   * name kept for compatibility with the `sla_hours` column.
+   */
   sla_hours: number
   last_polled_at: string | null
 }
@@ -142,6 +147,24 @@ export interface RepairApplyResult {
   applied_at: string | null
   incident_status: 'resolved' | 'repairing'
   sla_met: boolean | null
+}
+
+// --- 11. GET /api/experiments ---------------------------------------------
+
+export interface ExperimentAssignment {
+  experiment: string
+  variant: string
+}
+
+export interface ExperimentsResult {
+  /** Random, non-personal. Also set as the `ss_vid` cookie. */
+  visitor_id: string
+  assignments: ExperimentAssignment[]
+  /**
+   * Monthly price per tier under this visitor's pricing variant. Render these
+   * rather than `PLANS[id].monthly`, or the A/B test measures nothing.
+   */
+  pricing_monthly: Record<PlanId, number>
 }
 
 // --- 9. POST /api/stripe/checkout -----------------------------------------

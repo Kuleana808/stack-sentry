@@ -4,11 +4,13 @@ import { getStripe } from '@/lib/stripe'
 import { createAdminClient } from '@stack-sentry/core/supabase'
 import {
   PLANS,
+  PLAN_ORDER,
   isPlanId,
   liveVerified,
   notConfigured,
   failed,
   type PlanId,
+  captureAsync,
   type WebhookResult,
 } from '@stack-sentry/core'
 
@@ -89,7 +91,7 @@ async function onCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   const patch = {
     plan,
-    sla_hours: PLANS[plan].slaHours,
+    sla_hours: PLANS[plan].responseTargetHours,
     stripe_customer_id: asId(session.customer),
     stripe_subscription_id: asId(session.subscription),
     subscription_status: 'active',
@@ -112,22 +114,65 @@ async function onCheckoutCompleted(session: Stripe.Checkout.Session) {
     .from('customer_members')
     .insert({ customer_id: customer.id, user_id: userId, role: 'owner' })
   if (memberError) throw memberError
+
+  // The only place a purchase is real, so the only place it is counted.
+  captureAsync({
+    event: 'checkout_completed',
+    distinctId: userId,
+    customerId: customer.id,
+    properties: { plan },
+  })
+  captureAsync({
+    event: 'subscription_started',
+    distinctId: userId,
+    customerId: customer.id,
+    properties: { plan },
+  })
 }
 
 async function onSubscriptionChanged(subscription: Stripe.Subscription) {
   const supabase = createAdminClient()
   const plan = readPlan(subscription.metadata?.plan)
 
+  const { data: before } = await supabase
+    .from('customers')
+    .select('id, plan')
+    .eq('stripe_subscription_id', subscription.id)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('customers')
     .update({
       subscription_status: subscription.status,
       plan,
-      sla_hours: PLANS[plan].slaHours,
+      sla_hours: PLANS[plan].responseTargetHours,
     })
     .eq('stripe_subscription_id', subscription.id)
 
   if (error) throw error
+
+  // Upgrade/downgrade/cancel patterns are a named metric in the brief, so the
+  // direction of the move is recorded rather than inferred later from state.
+  if (before?.id) {
+    const previous = before.plan as PlanId | null
+    const rank = (p: PlanId) => PLAN_ORDER.indexOf(p)
+
+    if (subscription.status === 'canceled') {
+      captureAsync({
+        event: 'subscription_cancelled',
+        distinctId: subscription.metadata?.user_id ?? before.id,
+        customerId: before.id,
+        properties: { plan },
+      })
+    } else if (previous && previous !== plan) {
+      captureAsync({
+        event: rank(plan) > rank(previous) ? 'subscription_upgraded' : 'subscription_downgraded',
+        distinctId: subscription.metadata?.user_id ?? before.id,
+        customerId: before.id,
+        properties: { from: previous, to: plan },
+      })
+    }
+  }
 }
 
 /** Unknown or missing plan metadata falls back to the least-privileged tier. */

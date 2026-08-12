@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { PLANS, PLAN_ORDER, annualMonthlyEquivalent, withinStackLimit, isPlanId } from '../src/plans'
+import {
+  PLANS,
+  PLAN_ORDER,
+  ADD_ONS,
+  annualMonthlyEquivalent,
+  withinStackLimit,
+  isPlanId,
+} from '../src/plans'
 
 describe('plans', () => {
   it('matches the locked pricing', () => {
@@ -8,10 +15,34 @@ describe('plans', () => {
     expect(PLANS.pro.monthly).toBe(999)
   })
 
-  it('matches the locked SLA windows', () => {
-    expect(PLANS.starter.slaHours).toBe(4)
-    expect(PLANS.standard.slaHours).toBe(2)
-    expect(PLANS.pro.slaHours).toBe(1)
+  it('matches the locked response targets', () => {
+    // v0.1: a response *target*, matching what incumbents advertise. The
+    // SLA-backed guarantee is v0.2, gated on data.
+    expect(PLANS.starter.responseTargetHours).toBe(4)
+    expect(PLANS.standard.responseTargetHours).toBe(2)
+    expect(PLANS.pro.responseTargetHours).toBe(1)
+  })
+
+  it('carries the incumbent-parity retainer shape on every tier', () => {
+    // Zapier-expert agencies price as retainer + included hours + hourly +
+    // rush rate. Parity before divergence: we match the structure first.
+    for (const plan of PLAN_ORDER.map((id) => PLANS[id])) {
+      expect(plan.includedHours, plan.id).toBeGreaterThan(0)
+      expect(plan.hourlyRate, plan.id).toBeGreaterThan(0)
+      expect(plan.emergencyRate, plan.id).toBeGreaterThan(plan.hourlyRate)
+    }
+  })
+
+  it('lowers the hourly rate as the retainer rises', () => {
+    expect(PLANS.standard.hourlyRate).toBeLessThan(PLANS.starter.hourlyRate)
+    expect(PLANS.pro.hourlyRate).toBeLessThan(PLANS.standard.hourlyRate)
+  })
+
+  it('sells the one-off services incumbents lead with', () => {
+    const ids = ADD_ONS.map((a) => a.id)
+    expect(ids).toContain('zap_audit')
+    expect(ids).toContain('migration')
+    expect(ids).toContain('consolidation_review')
   })
 
   it('applies the 17% annual discount', () => {

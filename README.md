@@ -1,11 +1,15 @@
 # Stack Sentry
 
-Monitoring and agentic repair for SMB automation stacks — Zapier, Make, n8n, and
-raw webhooks. We watch the automations a business runs on, alert when they break,
-draft a fix, and apply it once a human approves. Flat monthly retainer with a
-guaranteed repair window.
+We monitor the Zapier automations a business runs on, alert when they break, and
+fix them. Monthly retainer with included fix hours, an hourly rate beyond them,
+and a rush rate — the way Zapier-expert agencies already work.
 
-$299 / $499 / $999 per month · 4 / 2 / 1-hour SLA.
+$299 / $499 / $999 per month · 4 / 2 / 1-hour response target.
+
+**v0.1 is alerting parity.** We match what the incumbents do before
+differentiating on it. Agentic repair and a response *guarantee* are v0.2,
+gated on data showing customers want them — the contracts are frozen
+(`docs/api-contracts.md`) but not shipped. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Quick start
 
@@ -69,7 +73,9 @@ emailed, or shown to a model.
 
 **No repair applies without human approval.** Enforced as a CHECK constraint, not
 a code path: a row cannot reach `applied` without `approved_by` and `approved_at`.
-The agent proposes; the customer approves; then we apply.
+The agent proposes; the customer approves; then we apply. The constraint is live
+now even though automated repair itself is a v0.2 feature — the guarantee should
+predate the thing it guards.
 
 **Local-first, not local-only.** Ollama drafts repairs by default. Anthropic Haiku
 is the escape hatch when local would degrade UX or is unreachable. Every routing
