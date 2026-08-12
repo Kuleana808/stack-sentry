@@ -20,7 +20,9 @@
     "./providers": "./src/providers/types.ts",
     "./providers/zapier": "./src/providers/zapier.ts",
     "./analytics": "./src/analytics.ts",
-    "./experiments": "./src/experiments.ts"
+    "./experiments": "./src/experiments.ts",
+    "./alerting": "./src/alerting.ts",
+    "./notifiers": "./src/notifiers/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

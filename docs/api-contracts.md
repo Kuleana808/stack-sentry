@@ -29,6 +29,7 @@ without an explicit change to this document.
 | 12 | `POST /api/pilots` | ✅ | PR #5 |
 | 13 | `GET /api/admin/pilots` | ✅ | PR #5 |
 | 14 | `POST /api/events` | ✅ | PR #5 |
+| 15 | `GET`/`PATCH /api/alerts/preferences` | ✅ | PR #6 |
 
 A 🟡 endpoint that is called returns a real envelope with
 `fallback_reason: "not implemented yet — planned in PR #N"` and `data: null`.
@@ -379,6 +380,38 @@ Errors: `400 invalid_request` · `422 event_not_allowed`.
 (`checkout_completed`, `subscription_*`) are deliberately absent: a purchase is
 established server-side from a verified Stripe webhook, never by a browser
 claiming it happened. Posting one returns `422`.
+
+## 15. `GET` / `PATCH /api/alerts/preferences` ✅
+
+Channels, thresholds, quiet hours, per-automation overrides.
+
+```jsonc
+{ "data": {
+    "channels": ["email", "slack"],
+    "alert_email": "owner@company.com",
+    "alert_sms": null,
+    "slack_webhook_configured": true,
+    "failure_threshold": 2,
+    "quiet_hours_start": "22:00", "quiet_hours_end": "07:00",
+    "timezone": "Pacific/Honolulu",
+    "automation_thresholds": { "<automation-uuid>": 3 },
+    "weekly_digest": true } }
+```
+
+PATCH accepts any subset. Errors: `400 invalid_request` · `401` · `409 no_subscription`.
+
+**The Slack webhook is write-only.** PATCH accepts `slack_webhook_url`; GET
+returns only `slack_webhook_configured`. Anyone holding that URL can post into
+the customer's workspace, so it is sealed under the customer's own data key like
+an OAuth token and never leaves the server.
+
+**Quiet hours must be set as a pair** — sending one half returns `400`. A
+half-configured window is not something either side can reason about.
+
+Per-automation thresholds override the customer default; `null` inherits. Quiet
+hours are honoured except when half or more of the stack is failing at once, when
+we page anyway — someone who muted 22:00–07:00 to avoid one flaky Zap still wants
+to know the business stopped running.
 
 ---
 

@@ -149,6 +149,25 @@ export interface RepairApplyResult {
   sla_met: boolean | null
 }
 
+// --- 15. Alerting ---------------------------------------------------------
+
+export type AlertChannel = 'email' | 'sms' | 'slack'
+export type AlertDeliveryStatus = 'queued' | 'sent' | 'failed' | 'suppressed'
+
+export interface AlertPreferences {
+  channels: AlertChannel[]
+  alert_email: string | null
+  alert_sms: string | null
+  slack_webhook_configured: boolean
+  failure_threshold: number
+  quiet_hours_start: string | null
+  quiet_hours_end: string | null
+  timezone: string
+  /** Per-automation threshold overrides, keyed by automation id. */
+  automation_thresholds: Record<string, number>
+  weekly_digest: boolean
+}
+
 // --- 12. POST /api/pilots -------------------------------------------------
 
 export interface PilotSignupResult {
