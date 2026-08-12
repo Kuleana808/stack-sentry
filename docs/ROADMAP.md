@@ -44,26 +44,20 @@ Small PRs, `-claude` branch suffix, `--force-with-lease` only, green CI to merge
 - **PR #2 `monorepo-contracts-claude`** — monorepo split for the Codex boundary,
   the 5-state contract envelope, contracts 1–3. Merged.
 - **PR #3 `failure-detection-claude`** — contracts 4–5, the detection rules, the
-  Zapier adapter, and the 5-minute poll cron. Open.
+  Zapier adapter, and the 5-minute poll cron. Merged.
+- **PR #4 `instrumentation-parity-claude`** — event taxonomy, experiments,
+  incumbent-parity pricing shape. Merged.
+- **PR #5 `pilot-funnel-claude`** — pilot signup, dogfood path, pilots dashboard,
+  Supabase analytics sink. Merged.
+- **PR #6 `alerting-parity-claude`** — honest v0.1 landing copy, email + Slack +
+  SMS alerting, per-automation thresholds, quiet hours with break-glass, weekly
+  digest. Open.
 
 ---
 
 ## Next up
 
-### PR #5 — `alerting-parity-claude` (next)
-
-The v0.1 core. What the incumbents do, matched.
-
-- Email (Resend), Slack (incoming webhook), SMS (Twilio, wired but dark until
-  revenue justifies the spend)
-- Per-automation threshold overrides on top of the per-customer default
-- Quiet hours honoured, with a break-glass for a total-stack outage
-- Per-incident report on open and on resolve
-- Weekly stack-health digest
-- `alert_sent` / `alert_suppressed` / `alert_failed` carry channel and reason so
-  "which alert types drive churn" is a join, not a guess
-
-### PR #6 — `reporting-and-addons-claude`
+### PR #7 — `reporting-and-addons-claude` (next)
 
 - Monthly review export
 - Add-on requests (audit, migration, consolidation) — the incumbent motion for
@@ -95,4 +89,4 @@ Ships only once v0.1 telemetry says customers want it.
 | Twilio SMS | Wired but dark until revenue | Confirm |
 | Zapier run-history API | Adapter written but **unverified** — endpoints guessed, `verified: false`, poller reports `fallback_reason` on every run | Developer credentials so it can be exercised for real |
 | `STACK_SENTRY_OAUTH_STATE_SECRET` | Not set — connect flow refuses to start without it | Generate + set in prod |
-| **Landing-page claims** | Live copy says "guaranteed repair within 2 hours" and "Zapier, Make and n8n". Neither is true yet: automated repair is v0.2, no consultant is staffed against a 2-hour clock, and only the Zapier adapter exists (`verified: false`). | **Deliver or reword before the site is public.** Safe while undeployed. |
+| ~~Landing-page claims~~ | **Resolved.** Copy rewritten to what v0.1 can keep: Zapier only, detection speed not repair speed, "we help you fix it" rather than a guarantee. Make/n8n named as coming. | — |
