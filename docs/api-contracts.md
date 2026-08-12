@@ -26,6 +26,9 @@ without an explicit change to this document.
 | 9 | `POST /api/stripe/checkout` | ✅ | PR #1 |
 | 10 | `POST /api/stripe/webhook` | ✅ | PR #1 |
 | 11 | `GET /api/experiments` | ✅ | PR #4 |
+| 12 | `POST /api/pilots` | ✅ | PR #5 |
+| 13 | `GET /api/admin/pilots` | ✅ | PR #5 |
+| 14 | `POST /api/events` | ✅ | PR #5 |
 
 A 🟡 endpoint that is called returns a real envelope with
 `fallback_reason: "not implemented yet — planned in PR #N"` and `data: null`.
@@ -313,6 +316,70 @@ variant. The visitor id is random and carries no personal data.
 is not exposure; counting an assignment nobody saw biases every result computed
 from it.
 
+## 12. `POST /api/pilots` ✅
+
+The free-2-week-pilot signup. **Public and unauthenticated** — this is the top of
+the funnel and a sign-up wall here costs leads.
+
+```jsonc
+// request — only `email` is required
+{ "email": "owner@company.com", "zapier_url": "…", "pain": "…",
+  "source": "landing_hero", "variants": { "pricing_tiers": "lower_entry" } }
+
+// 200
+{ "data": { "pilot_id": "uuid", "email": "…", "already_registered": false } }
+```
+
+Errors: `400 invalid_request` · `500 store_failed` · `503` not configured.
+
+`already_registered: true` means this email was already submitted. Show a warm
+"you're already on the list", not an error.
+
+`zapier_url` is free text on purpose — people paste a Zap link, a workspace link,
+or the name of the agency that built it. All three are signal; a validation error
+here costs a lead.
+
+Pass the visitor's `variants` so conversion attributes to the ladder and headline
+they actually saw.
+
+**Fails closed.** With no Supabase configured it returns `503`, never a fake
+success — telling a prospect "we got it" when nothing was stored is the worst
+possible outcome on this route.
+
+## 13. `GET /api/admin/pilots` ✅
+
+Brent-only pipeline view. Returns **404, not 403**, for a non-admin — a 403
+confirms there is an admin surface worth attacking.
+
+```jsonc
+{ "data": {
+    "pilots": [ { "id": "…", "email": "…", "status": "new",
+                  "days_since_signup": 1.4, "days_since_connection": null,
+                  "connected_stacks": 0, "first_failure_at": null,
+                  "zapier_url": "…", "pain": "…", "notes": null } ],
+    "counts": { "new": 3, "contacted": 1, "connected": 0, "converted": 0, "declined": 0 } } }
+```
+
+`requires_review: true` whenever anyone is still in `new` — an unanswered lead is
+the thing this dashboard exists to surface.
+
+## 14. `POST /api/events` ✅
+
+Client-side event capture. The browser never writes to `analytics_events`
+directly — it is deny-all under RLS, and a client write path would let anyone
+forge conversion data.
+
+```jsonc
+{ "event": "experiment_exposed", "properties": { "experiment": "pricing_tiers", "variant": "control" } }
+```
+
+Errors: `400 invalid_request` · `422 event_not_allowed`.
+
+**The event name is checked against an allowlist.** Revenue events
+(`checkout_completed`, `subscription_*`) are deliberately absent: a purchase is
+established server-side from a verified Stripe webhook, never by a browser
+claiming it happened. Posting one returns `422`.
+
 ---
 
 ## Instrumentation
@@ -322,7 +389,11 @@ ships before feature #1. The event taxonomy is a closed union in
 `@stack-sentry/core` (`packages/core/src/analytics.ts`) — a typo is a build
 error, not a silent hole in a funnel.
 
-Server-side events are already emitted for `magic_link_requested`,
+The sink is our own `analytics_events` table in Supabase — no third-party
+vendor, no key to provision, and the behavioural record sits next to the tenant
+data it must be joined against.
+
+Server-side events are already emitted for `pilot_submitted`, `magic_link_requested`,
 `onboarding_connect_started`, `checkout_started`, `checkout_completed`,
 `subscription_started`, `subscription_upgraded`, `subscription_downgraded` and
 `subscription_cancelled`.
