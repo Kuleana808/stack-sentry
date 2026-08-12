@@ -95,3 +95,4 @@ Ships only once v0.1 telemetry says customers want it.
 | Twilio SMS | Wired but dark until revenue | Confirm |
 | Zapier run-history API | Adapter written but **unverified** — endpoints guessed, `verified: false`, poller reports `fallback_reason` on every run | Developer credentials so it can be exercised for real |
 | `STACK_SENTRY_OAUTH_STATE_SECRET` | Not set — connect flow refuses to start without it | Generate + set in prod |
+| **Landing-page claims** | Live copy says "guaranteed repair within 2 hours" and "Zapier, Make and n8n". Neither is true yet: automated repair is v0.2, no consultant is staffed against a 2-hour clock, and only the Zapier adapter exists (`verified: false`). | **Deliver or reword before the site is public.** Safe while undeployed. |

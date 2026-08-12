@@ -4,20 +4,17 @@
  * Doctrine: no feature ships without a hypothesis and a metric, and
  * instrumentation ships before feature #1. This module is that floor.
  *
- * Deliberately zero-dependency — a hand-rolled POST to PostHog's capture API
- * rather than `posthog-node`. Two reasons:
- *
- *   1. The same module has to run in the Next app (Node), the Edge Function
- *      (Deno), and the local worker. One implementation, three runtimes.
- *   2. Analytics must never be able to break a request. A vendor SDK that
- *      throws, retries, or holds the event loop open is a liability on a path
- *      that is telling a customer their automations are down.
+ * The sink is our own `analytics_events` table in Supabase. Chosen over a
+ * third-party vendor because there is no key to provision before we can
+ * instrument, no external dependency to be down, and — the real reason — the
+ * behavioural record sits next to the tenant data it has to be joined against.
+ * "Which alert types drive churn" is a SQL join here rather than an
+ * export-and-reconcile job against someone else's warehouse.
  *
  * Every capture is fail-open and fire-and-forget: a failure is logged once and
- * swallowed. Losing an event is acceptable; losing an alert is not.
+ * swallowed. Losing an event is acceptable; losing an alert is not. Nothing on a
+ * customer-facing path may be able to break because analytics had a bad day.
  */
-
-const POSTHOG_HOST = process.env.POSTHOG_HOST ?? 'https://us.i.posthog.com'
 
 /**
  * The event taxonomy.
@@ -36,9 +33,20 @@ export type AnalyticsEvent =
   | 'checkout_abandoned'
   | 'book_a_call_clicked'
 
+  // --- Pilot funnel --------------------------------------------------------
+  // The free-2-week-pilot CTA is the primary day-1 conversion path, so each
+  // step is its own event rather than a single "converted" flag.
+  | 'pilot_form_viewed'
+  | 'pilot_form_started'
+  | 'pilot_submitted'
+  | 'pilot_duplicate_submitted'
+  | 'pilot_contacted'
+  | 'pilot_connected'
+  | 'pilot_converted'
+
   // --- Onboarding funnel ---------------------------------------------------
-  // Which step drops sign-ups is a named question in the brief; each step is
-  // its own event so the drop-off is a funnel query rather than a guess.
+  // Which step drops sign-ups is a named question; each step is its own event so
+  // the drop-off is a funnel query rather than a guess.
   | 'signup_started'
   | 'magic_link_requested'
   | 'magic_link_confirmed'
@@ -93,34 +101,54 @@ export interface CaptureArgs {
   customerId?: string | null
 }
 
-export function analyticsConfigured(): boolean {
-  return Boolean(process.env.POSTHOG_API_KEY)
+/** A row as it lands in `analytics_events`. */
+export interface AnalyticsRow {
+  event: string
+  distinct_id: string
+  customer_id: string | null
+  properties: Record<string, unknown>
+  occurred_at: string
 }
 
 /**
- * Fire-and-forget. Never throws, never rejects, never blocks the caller.
+ * The sink is a plain write function rather than a Supabase-shaped object, so
+ * `core` stays decoupled from any particular client and the wiring lives in the
+ * app that already owns the credentials. It also makes the sink trivial to
+ * replace in a test with a recording array.
  */
+export type EventSink = (row: AnalyticsRow) => Promise<void>
+
+let sink: EventSink | null = null
+
+/**
+ * Install the service-role client once at process start. Until it is installed,
+ * captures are no-ops rather than errors — instrumentation must never be the
+ * reason a request fails, including during boot.
+ */
+export function setEventSink(write: EventSink): void {
+  sink = write
+}
+
+/** Test seam: drop the installed sink. */
+export function resetEventSink(): void {
+  sink = null
+}
+
+export function analyticsConfigured(): boolean {
+  return sink !== null
+}
+
+/** Fire-and-forget. Never throws, never rejects, never blocks the caller. */
 export async function capture(args: CaptureArgs): Promise<void> {
-  const apiKey = process.env.POSTHOG_API_KEY
-  if (!apiKey) return
+  if (!sink) return
 
   try {
-    await fetch(`${POSTHOG_HOST}/i/v0/e/`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        api_key: apiKey,
-        event: args.event,
-        distinct_id: args.distinctId,
-        properties: {
-          ...args.properties,
-          ...(args.customerId ? { $groups: { customer: args.customerId } } : {}),
-          $lib: 'stack-sentry-core',
-        },
-        timestamp: new Date().toISOString(),
-      }),
-      // Do not let a slow analytics host hold a customer-facing request open.
-      signal: AbortSignal.timeout(3000),
+    await sink({
+      event: args.event,
+      distinct_id: args.distinctId,
+      customer_id: args.customerId ?? null,
+      properties: args.properties ?? {},
+      occurred_at: new Date().toISOString(),
     })
   } catch (error) {
     // Losing an event is acceptable. Losing an alert is not.
@@ -132,9 +160,7 @@ export async function capture(args: CaptureArgs): Promise<void> {
   }
 }
 
-/**
- * Capture without awaiting. Use on request paths where the customer is waiting.
- */
+/** Capture without awaiting. Use on request paths where the customer is waiting. */
 export function captureAsync(args: CaptureArgs): void {
   void capture(args)
 }

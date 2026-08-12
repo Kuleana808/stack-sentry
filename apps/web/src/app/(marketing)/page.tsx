@@ -1,124 +1,120 @@
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { PLANS } from '@stack-sentry/core'
-import { formatUsd } from '@/lib/utils'
+import { PLANS, PLAN_ORDER } from '@stack-sentry/core'
+import { PilotForm } from './pilot-form'
+import { PricingStrip } from './pricing-strip'
+
+/**
+ * Landing page.
+ *
+ * ⚠️ CLAIMS REVIEW REQUIRED BEFORE THIS GOES LIVE ON A REAL DOMAIN.
+ *
+ * Two lines below promise more than the product currently does:
+ *
+ *   1. "Guaranteed repair within 2 hours" — automated repair is v0.2 and gated
+ *      on data, and no consultant is staffed against a 2-hour clock yet.
+ *   2. "Zapier + Make + n8n" — only the Zapier adapter exists, and it is still
+ *      `verified: false` pending real developer credentials.
+ *
+ * This is safe to have in the repo (nothing is deployed, the domain is not
+ * bought) but must be either delivered or reworded before launch. Flagged in
+ * docs/ROADMAP.md under open decisions.
+ */
 
 export default function HomePage() {
   return (
     <>
       <section className="container pb-16 pt-20 sm:pt-28">
         <h1 className="max-w-3xl text-balance text-4xl font-semibold leading-[1.08] tracking-tight sm:text-6xl">
-          Your automations break at 2am. We fix them by breakfast.
+          We monitor and fix your Zaps
         </h1>
-        <p className="mt-6 max-w-xl text-pretty text-lg leading-relaxed text-muted-foreground">
-          Stack Sentry watches every Zapier, Make, and n8n automation your business runs on. When
-          one breaks, we find it, write the fix, and send it to you for a one-click approval —
-          inside a repair window we put in writing.
+        <p className="mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground">
+          24/7 watch on Zapier, Make and n8n. Alerts the moment something fails.
+          Guaranteed repair within 2 hours. Flat monthly retainer.
         </p>
 
-        <div className="mt-9 flex flex-wrap items-center gap-4">
-          <Button asChild size="lg">
-            <Link href="/login">Get started</Link>
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Connect Zapier and see your stack health in under five minutes.
-          </span>
+        <div className="mt-10 max-w-xl">
+          <PilotForm />
         </div>
+
+        <p className="mt-6 text-sm text-muted-foreground">
+          Built by Brent Akamine · dogfooded on my own stack before anyone else&apos;s
+        </p>
       </section>
 
-      {/* Show the product rather than describe it. */}
-      <section className="container pb-24">
+      <section className="container pb-20">
         <StackHealthPreview />
       </section>
 
       <section className="border-y border-border bg-muted/40">
         <div className="container py-20">
-          <h2 className="max-w-2xl text-3xl font-semibold tracking-tight">
-            What happens the moment something breaks
-          </h2>
-          <ol className="mt-12 grid gap-10 sm:grid-cols-3">
-            {STEPS.map((step, i) => (
-              <li key={step.title}>
-                <div className="font-mono text-sm text-primary">0{i + 1}</div>
-                <h3 className="mt-3 text-lg font-medium">{step.title}</h3>
-                <p className="mt-2 text-pretty leading-relaxed text-muted-foreground">
-                  {step.body}
-                </p>
-              </li>
-            ))}
-          </ol>
+          <h2 className="text-3xl font-semibold tracking-tight">One number a month</h2>
+          <p className="mt-3 max-w-lg text-muted-foreground">
+            Monitoring, alerts and fix hours are in every plan. What changes is how many
+            automations we watch and how fast we move.
+          </p>
+          <PricingStrip />
+          <p className="mt-6 text-sm text-muted-foreground">
+            Beyond your included hours: {PLANS.starter.hourlyRate}–{PLANS.pro.hourlyRate}/hr
+            depending on plan, or {PLANS.pro.emergencyRate}–{PLANS.starter.emergencyRate}/hr for
+            drop-everything emergencies. Audits, migrations and consolidation reviews are
+            available as one-offs.
+          </p>
         </div>
       </section>
 
-      <section className="container py-24">
-        <div className="flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="text-3xl font-semibold tracking-tight">
-              One number. One repair window.
-            </h2>
-            <p className="mt-3 max-w-md text-muted-foreground">
-              Every plan includes monitoring, alerts, repair drafts, and the approval queue. The
-              difference is how many automations you run and how fast we have to move.
-            </p>
-          </div>
-          <Button asChild variant="outline" size="lg">
-            <Link href="/pricing">See the three plans</Link>
-          </Button>
+      {/* The objection that decides the sale. */}
+      <section className="container py-20">
+        <h2 className="max-w-2xl text-3xl font-semibold tracking-tight">
+          Why not just use Zapier&apos;s own alerts?
+        </h2>
+        <p className="mt-4 max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground">
+          Because an alert tells you something broke. It does not tell you what to change, it
+          does not watch the other three platforms your business runs on, and nobody at Zapier
+          is on the hook for getting it working again.
+        </p>
+
+        <div className="mt-12 grid gap-10 sm:grid-cols-3">
+          {OBJECTION_ANSWERS.map((item) => (
+            <div key={item.title}>
+              <h3 className="text-lg font-medium">{item.title}</h3>
+              <p className="mt-2 text-pretty leading-relaxed text-muted-foreground">{item.body}</p>
+            </div>
+          ))}
         </div>
 
-        <div className="mt-12 grid gap-4 sm:grid-cols-3">
-          {Object.values(PLANS).map((plan) => (
-            <Link
-              key={plan.id}
-              href="/pricing"
-              className="rounded-lg border border-border p-6 transition-colors hover:border-primary/60"
-            >
-              <div className="text-sm font-medium text-muted-foreground">{plan.name}</div>
-              <div className="mt-2 text-3xl font-semibold tracking-tight">
-                {formatUsd(plan.monthly)}
-                <span className="text-base font-normal text-muted-foreground">/mo</span>
-              </div>
-              <div className="mt-3 text-sm text-muted-foreground">
-                {plan.stackLimit === null ? 'Unlimited automations' : `Up to ${plan.stackLimit} automations`}
-                {' · '}
-                {/* Forced by the plan-shape change: `slaHours` -> `responseTargetHours`.
-                    v0.1 advertises a response target, matching incumbents; the
-                    SLA-backed guarantee is v0.2, gated on data. Wording is
-                    Codex's to finalise in the repositioning pass. */}
-                {plan.responseTargetHours}-hour response target
-              </div>
-            </Link>
-          ))}
+        <div className="mt-14">
+          <Link
+            href="#pilot"
+            className="text-lg text-primary underline-offset-4 hover:underline"
+          >
+            Start a free 2-week pilot →
+          </Link>
         </div>
       </section>
     </>
   )
 }
 
-const STEPS = [
+const OBJECTION_ANSWERS = [
   {
-    title: 'We catch it',
-    body: 'Every automation is polled around the clock. A failed run raises an incident and starts the clock on your repair window — before a customer emails you about it.',
+    title: 'Accountability',
+    body: 'A native alert fires into an inbox nobody owns. We carry a repair window, and every incident records whether we hit it. You can hold us to a number.',
   },
   {
-    title: 'We write the fix',
-    body: 'The execution log goes to a repair agent that has seen this failure across every stack we monitor. You get a plain-English diagnosis and the specific change to make.',
+    title: 'Cross-platform',
+    body: 'Most businesses run more than one automation tool. Zapier will never watch your Make scenarios or your n8n workflows. One dashboard covers all of them.',
   },
   {
-    title: 'You approve it',
-    body: 'One click from the alert. Nothing touches your account until you say yes — no autonomous edits to systems your business runs on.',
+    title: 'Someone actually fixes it',
+    body: 'Knowing a field got renamed is not the same as having it fixed. Fix hours are included in the retainer — you are not hiring a consultant every time something breaks.',
   },
 ]
 
-/**
- * A static, honest picture of the dashboard. Not a claim about a specific
- * customer, and not a live widget pretending to be one.
- */
 function StackHealthPreview() {
   const rows = [
     { name: 'Stripe → QuickBooks invoice sync', state: 'healthy', detail: '412 runs · 0 failed' },
     { name: 'Typeform → HubSpot lead intake', state: 'healthy', detail: '96 runs · 0 failed' },
-    { name: 'Shopify → Slack order alerts', state: 'failing', detail: '3 failed · repair drafted' },
+    { name: 'Shopify → Slack order alerts', state: 'failing', detail: '3 failed · fix in progress' },
     { name: 'Calendly → Gmail follow-up', state: 'healthy', detail: '38 runs · 0 failed' },
     { name: 'Airtable → Mailchimp sync', state: 'degraded', detail: '1 failed · watching' },
   ] as const
@@ -132,7 +128,11 @@ function StackHealthPreview() {
       <ul className="divide-y divide-border">
         {rows.map((row) => (
           <li key={row.name} className="flex items-center gap-4 px-5 py-3.5">
-            <StatePill state={row.state} />
+            <span
+              className={`h-2 w-2 shrink-0 rounded-full ${STATE_STYLES[row.state]}`}
+              aria-hidden
+            />
+            <span className="sr-only">{row.state}</span>
             <span className="min-w-0 flex-1 truncate text-sm">{row.name}</span>
             <span className="hidden font-mono text-xs text-muted-foreground sm:block">
               {row.detail}
@@ -141,8 +141,8 @@ function StackHealthPreview() {
         ))}
       </ul>
       <div className="border-t border-border bg-muted/40 px-5 py-3.5 text-sm text-muted-foreground">
-        <span className="font-medium text-foreground">1 repair awaiting your approval</span> — Shopify
-        order alerts stopped after a field rename. Fix drafted 4 minutes ago.
+        <span className="font-medium text-foreground">Shopify order alerts</span> — stopped after a
+        field rename. Caught 4 minutes ago, fix underway.
       </div>
     </div>
   )
@@ -154,11 +154,4 @@ const STATE_STYLES = {
   failing: 'bg-state-failing',
 } as const
 
-function StatePill({ state }: { state: keyof typeof STATE_STYLES }) {
-  return (
-    <span className="flex items-center gap-2">
-      <span className={`h-2 w-2 shrink-0 rounded-full ${STATE_STYLES[state]}`} />
-      <span className="sr-only">{state}</span>
-    </span>
-  )
-}
+export const PLAN_IDS = PLAN_ORDER

@@ -149,6 +149,40 @@ export interface RepairApplyResult {
   sla_met: boolean | null
 }
 
+// --- 12. POST /api/pilots -------------------------------------------------
+
+export interface PilotSignupResult {
+  pilot_id: string
+  email: string
+  /** True when this email had already been submitted. Not an error. */
+  already_registered: boolean
+}
+
+// --- 13. GET /api/admin/pilots --------------------------------------------
+
+export type PilotStatus = 'new' | 'contacted' | 'connected' | 'converted' | 'declined'
+
+export interface PilotRecord {
+  id: string
+  email: string
+  zapier_url: string | null
+  pain: string | null
+  status: PilotStatus
+  created_at: string
+  contacted_at: string | null
+  connected_at: string | null
+  days_since_signup: number
+  days_since_connection: number | null
+  connected_stacks: number
+  first_failure_at: string | null
+  notes: string | null
+}
+
+export interface PilotPipelineResult {
+  pilots: PilotRecord[]
+  counts: Record<PilotStatus, number>
+}
+
 // --- 11. GET /api/experiments ---------------------------------------------
 
 export interface ExperimentAssignment {
