@@ -15,9 +15,9 @@ const geistMono = localFont({
 })
 
 export const metadata: Metadata = {
-  title: 'Stack Sentry — your automations, watched and repaired',
+  title: 'Stack Sentry — Zapier automation monitoring and alerts',
   description:
-    'We monitor your Zapier, Make, and n8n automations around the clock, and fix them within a guaranteed window when they break.',
+    'We monitor the Zapier automations a business runs on and alert when they break. $299 / $499 / $999 per month.',
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

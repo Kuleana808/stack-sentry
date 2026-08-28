@@ -6,18 +6,15 @@ import { PricingStrip } from './pricing-strip'
 /**
  * Landing page.
  *
- * ⚠️ CLAIMS REVIEW REQUIRED BEFORE THIS GOES LIVE ON A REAL DOMAIN.
+ * Every claim here is one v0.1 can actually keep:
+ *   - Zapier only. Make and n8n are named as coming, never as shipping.
+ *   - Detection speed, not repair speed. The 5-minute number is the poll
+ *     interval, which is real. A repair-time promise is not, so it is absent.
+ *   - "We help you fix it" — accountable, and true of a human on a retainer.
+ *     Automated repair is v0.2 and gated on data; nothing here implies it.
  *
- * Two lines below promise more than the product currently does:
- *
- *   1. "Guaranteed repair within 2 hours" — automated repair is v0.2 and gated
- *      on data, and no consultant is staffed against a 2-hour clock yet.
- *   2. "Zapier + Make + n8n" — only the Zapier adapter exists, and it is still
- *      `verified: false` pending real developer credentials.
- *
- * This is safe to have in the repo (nothing is deployed, the domain is not
- * bought) but must be either delivered or reworded before launch. Flagged in
- * docs/ROADMAP.md under open decisions.
+ * If a claim is added back, it needs to be one the product can keep on the day
+ * the page ships, not the day we hope it will.
  */
 
 export default function HomePage() {
@@ -25,11 +22,12 @@ export default function HomePage() {
     <>
       <section className="container pb-16 pt-20 sm:pt-28">
         <h1 className="max-w-3xl text-balance text-4xl font-semibold leading-[1.08] tracking-tight sm:text-6xl">
-          We monitor and fix your Zaps
+          We watch your Zaps. When they break, we know first.
         </h1>
         <p className="mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground">
-          24/7 watch on Zapier, Make and n8n. Alerts the moment something fails.
-          Guaranteed repair within 2 hours. Flat monthly retainer.
+          24/7 monitoring on your Zapier automations. Email and SMS alerts within five
+          minutes of a failure. Hands-on repair support in your first 24 hours. Flat monthly
+          retainer.
         </p>
 
         <div className="mt-10 max-w-xl">
@@ -37,7 +35,8 @@ export default function HomePage() {
         </div>
 
         <p className="mt-6 text-sm text-muted-foreground">
-          Built by Brent Akamine · dogfooded on my own stack before anyone else&apos;s
+          Zapier today · Make and n8n coming · Built by Brent Akamine, dogfooded on my own
+          stack before anyone else&apos;s
         </p>
       </section>
 
@@ -68,9 +67,9 @@ export default function HomePage() {
           Why not just use Zapier&apos;s own alerts?
         </h2>
         <p className="mt-4 max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground">
-          Because an alert tells you something broke. It does not tell you what to change, it
-          does not watch the other three platforms your business runs on, and nobody at Zapier
-          is on the hook for getting it working again.
+          Because a native alert tells you something broke, then stops. It lands in an inbox
+          nobody owns, it does not tell you what to change, and nobody at Zapier is on the hook
+          for getting you working again.
         </p>
 
         <div className="mt-12 grid gap-10 sm:grid-cols-3">
@@ -97,16 +96,16 @@ export default function HomePage() {
 
 const OBJECTION_ANSWERS = [
   {
-    title: 'Accountability',
-    body: 'A native alert fires into an inbox nobody owns. We carry a repair window, and every incident records whether we hit it. You can hold us to a number.',
+    title: 'You hear it from us first',
+    body: 'We poll every five minutes and alert by email and SMS. You find out from us, not from a customer asking where their order went.',
   },
   {
-    title: 'Cross-platform',
-    body: 'Most businesses run more than one automation tool. Zapier will never watch your Make scenarios or your n8n workflows. One dashboard covers all of them.',
+    title: 'Someone actually helps',
+    body: 'Knowing a field got renamed is not the same as having it fixed. Fix hours are included in the retainer, so you are not hiring a consultant every time something breaks.',
   },
   {
-    title: 'Someone actually fixes it',
-    body: 'Knowing a field got renamed is not the same as having it fixed. Fix hours are included in the retainer — you are not hiring a consultant every time something breaks.',
+    title: 'A record you can point at',
+    body: "Every failure, every response and every fix is logged. When someone asks why orders stopped last Tuesday, the answer is on a page rather than in somebody's memory.",
   },
 ]
 

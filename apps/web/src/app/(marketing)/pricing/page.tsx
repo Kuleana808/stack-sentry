@@ -4,7 +4,7 @@ import { PricingTable } from './pricing-table'
 export const metadata: Metadata = {
   title: 'Pricing — Stack Sentry',
   description:
-    'Three plans. Monitoring, alerts, repair drafts and the approval queue are in all of them — the difference is how many automations you run and how fast we have to move.',
+    'Three plans. Monitoring, alerts and included fix hours are in all of them — the difference is how many automations you run and how fast we respond.',
 }
 
 export default function PricingPage() {
@@ -14,8 +14,8 @@ export default function PricingPage() {
         Pick your repair window.
       </h1>
       <p className="mt-5 max-w-xl text-lg text-muted-foreground">
-        Monitoring, alerts, repair drafts and one-click approval are in every plan. What changes is
-        how many automations we watch and how fast we have to fix them.
+        Monitoring, alerts and included fix hours are in every plan. What changes is
+        how many automations we watch and how fast we respond.
       </p>
 
       <PricingTable />

@@ -2,21 +2,40 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 /**
- * Refreshes the Supabase session cookie on every request, and keeps signed-out
- * visitors out of the app surfaces.
+ * Session refresh + a convenience gate for app surfaces. RLS is the security
+ * boundary; this only keeps signed-out visitors out of /dashboard and friends.
  *
- * This is a convenience gate, not the security boundary — RLS is. A request
- * that slipped past here still cannot read another tenant's rows.
+ * Marketing (/, /pricing, /about, /book-a-call) is not in `matcher`. A missing
+ * or invalid Supabase env must never 500 those pages.
+ *
+ * Read NEXT_PUBLIC_* as static property access so the Edge bundle inlines them.
+ * Do not invent placeholder credentials.
  */
-const PROTECTED = ['/dashboard', '/integrations', '/repairs', '/settings', '/admin']
+const PROTECTED = ['/dashboard', '/integrations', '/repairs', '/settings', '/admin'] as const
+
+function isProtectedPath(pathname: string): boolean {
+  return PROTECTED.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
+}
+
+function supabasePublicEnv(): { url: string; anonKey: string } | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()
+  if (!url || !anonKey) return null
+  return { url, anonKey }
+}
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request })
+  const { pathname, search } = request.nextUrl
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
+  const env = supabasePublicEnv()
+  if (!env) {
+    if (isProtectedPath(pathname)) return redirectToLogin(request, pathname, search)
+    return response
+  }
+
+  try {
+    const supabase = createServerClient(env.url, env.anonKey, {
       cookies: {
         getAll() {
           return request.cookies.getAll()
@@ -29,26 +48,39 @@ export async function middleware(request: NextRequest) {
           )
         },
       },
-    },
-  )
+    })
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  const { pathname, search } = request.nextUrl
-  if (!user && PROTECTED.some((prefix) => pathname.startsWith(prefix))) {
-    const loginUrl = new URL('/login', request.url)
-    // Carry the query string, not just the path. The OAuth callback lands on
-    // /dashboard?connect=…&reason=… and if the session is not live yet, dropping
-    // the search would silently discard the outcome of the connect attempt.
-    loginUrl.searchParams.set('next', `${pathname}${search}`)
-    return NextResponse.redirect(loginUrl)
+    if (!user && isProtectedPath(pathname)) {
+      return redirectToLogin(request, pathname, search)
+    }
+  } catch {
+    if (isProtectedPath(pathname)) return redirectToLogin(request, pathname, search)
   }
 
   return response
 }
 
+function redirectToLogin(request: NextRequest, pathname: string, search: string) {
+  const loginUrl = new URL('/login', request.url)
+  loginUrl.searchParams.set('next', `${pathname}${search}`)
+  return NextResponse.redirect(loginUrl)
+}
+
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff2?)$).*)'],
+  matcher: [
+    '/dashboard',
+    '/dashboard/:path*',
+    '/integrations',
+    '/integrations/:path*',
+    '/repairs',
+    '/repairs/:path*',
+    '/settings',
+    '/settings/:path*',
+    '/admin',
+    '/admin/:path*',
+  ],
 }

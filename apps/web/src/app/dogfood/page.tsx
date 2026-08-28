@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { isSupabasePublicConfigured } from '@/lib/supabase/env'
 import { createAdminClient } from '@stack-sentry/core/supabase'
 import { ConnectButton } from './connect-button'
 
@@ -15,7 +16,11 @@ import { ConnectButton } from './connect-button'
  * placeholder data: a green check that does not correspond to working
  * infrastructure is worse than a red one.
  */
+export const dynamic = 'force-dynamic'
+
 export default async function DogfoodPage() {
+  if (!isSupabasePublicConfigured()) redirect('/login?next=/dogfood')
+
   const supabase = await createClient()
   const {
     data: { user },

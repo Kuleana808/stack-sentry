@@ -27,6 +27,18 @@ npm run test
 npm run build
 ```
 
+## Deploy
+
+Vercel project `stack-sentry` is linked on team `brent-akamines-projects`.
+Root Directory must be `apps/web` (install from the repo root). Marketing
+routes (`/`, `/pricing`, `/about`, `/book-a-call`) build with no backend
+secrets. `stacksentry.xyz` is not serving this app until DNS is pointed at
+that project.
+
+See [DEPLOY.md](DEPLOY.md) for project settings, required vs optional env, and
+the DNS records for `stacksentry.xyz`. Do not assume that hostname is serving
+this app until those steps are done.
+
 ## Layout
 
 npm workspaces. Two packages.

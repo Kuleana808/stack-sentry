@@ -2,13 +2,18 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/server'
+import { isSupabasePublicConfigured } from '@/lib/supabase/env'
 
 /**
  * Landing spot after sign-in and after checkout. The real stack-health
  * dashboard lands in PR #3 once there is polling data to render; this exists so
  * the auth and Stripe flows terminate somewhere real rather than a 404.
  */
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
+  if (!isSupabasePublicConfigured()) redirect('/login?next=/dashboard')
+
   const supabase = await createClient()
   const {
     data: { user },

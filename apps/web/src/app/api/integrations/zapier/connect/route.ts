@@ -10,6 +10,7 @@ import {
 } from '@stack-sentry/core'
 import { createOAuthState, OAUTH_STATE_COOKIE, OAUTH_STATE_TTL_MS } from '@stack-sentry/core/oauth'
 import { createClient } from '@/lib/supabase/server'
+import { isSupabasePublicConfigured } from '@/lib/supabase/env'
 
 /**
  * Contract 2 — POST /api/integrations/zapier/connect
@@ -27,6 +28,12 @@ const ZAPIER_AUTHORIZE_URL = 'https://zapier.com/oauth/authorize/'
 const SCOPES = ['zap:read', 'authentication:read'] as const
 
 export async function POST(request: Request) {
+  if (!isSupabasePublicConfigured()) {
+    return NextResponse.json(notConfigured('Supabase auth is not configured in this environment.'), {
+      status: 503,
+    })
+  }
+
   const supabase = await createClient()
   const {
     data: { user },

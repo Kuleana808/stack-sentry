@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { isSupabasePublicConfigured } from '@/lib/supabase/env'
 import { safeNext } from '@stack-sentry/core'
 
 /**
@@ -12,6 +13,10 @@ export async function GET(request: Request) {
 
   if (!code) {
     return NextResponse.redirect(new URL('/login?error=missing_code', url.origin))
+  }
+
+  if (!isSupabasePublicConfigured()) {
+    return NextResponse.redirect(new URL('/login?error=not_configured', url.origin))
   }
 
   const supabase = await createClient()

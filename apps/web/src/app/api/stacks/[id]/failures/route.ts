@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import {
   liveVerified,
+  notConfigured,
   failed,
   encodeCursor,
   decodeCursor,
@@ -11,6 +12,7 @@ import {
   type RepairStatus,
 } from '@stack-sentry/core'
 import { createClient } from '@/lib/supabase/server'
+import { isSupabasePublicConfigured } from '@/lib/supabase/env'
 
 /**
  * Contract 5 — GET /api/stacks/:id/failures
@@ -28,6 +30,12 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params
   const url = new URL(request.url)
+
+  if (!isSupabasePublicConfigured()) {
+    return NextResponse.json(notConfigured('Supabase auth is not configured in this environment.'), {
+      status: 503,
+    })
+  }
 
   const supabase = await createClient()
   const {
