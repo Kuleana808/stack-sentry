@@ -1,28 +1,31 @@
 # Deploy Stack Sentry (marketing first)
 
-This repo has **no Vercel project linked yet**. Do not treat any `*.vercel.app`
-or `https://stacksentry.xyz` URL as live until you have created the project,
-shipped a green production deploy, and pointed DNS at it.
+The Vercel project **stack-sentry** now exists on team **brent-akamines-projects**
+and is linked to `Kuleana808/stack-sentry`. Preview deploys from this PR are
+Ready (behind Vercel SSO). That is not a public site.
 
-As of 2026-08-28, public DNS for `stacksentry.xyz` is still Porkbun parking
-(`207.207.210.107` / `207.207.210.229`, `www` → `pixie.porkbun.com`). HTTPS
-fails with a TLS handshake error. That is not this app.
+`https://stacksentry.xyz` is **not** live. As of 2026-08-28, public DNS is still
+Porkbun parking (`207.207.210.107` / `207.207.210.229`, `www` →
+`pixie.porkbun.com`). HTTPS fails with a TLS handshake error. Do not advertise
+that hostname until a production deploy is green and the records below have
+propagated.
 
 If the domain is attached to another Vercel project (including a leftover
 project named `site`), remove it there first. A hostname can only belong to one
 Vercel project.
 
-## Create the Vercel project
+## Project settings (already correct on the linked project)
 
-1. In team **brent-akamines-projects**, import `Kuleana808/stack-sentry`.
-2. Framework Preset: **Next.js**.
-3. **Root Directory: `apps/web`**. Do not leave this as the repository root.
+Confirm these on https://vercel.com/brent-akamines-projects/stack-sentry :
+
+1. Framework Preset: **Next.js**.
+2. **Root Directory: `apps/web`**. Do not change this to the repository root.
    `next.config.ts` lives in `apps/web`. If Root Directory is `.`, Vercel will
    not find the Next app and will look for `.next` in the wrong place.
-4. Enable **Include source files outside of the Root Directory in the Build
-   Step** so `packages/core` is visible.
-5. Node.js **22** (see root `package.json` `engines`).
-6. Production branch: `main`.
+3. **Include source files outside of the Root Directory in the Build Step**
+   so `packages/core` is visible.
+4. Node.js **22** (see root `package.json` `engines`).
+5. Production branch: `main`.
 
 `apps/web/vercel.json` then supplies:
 
