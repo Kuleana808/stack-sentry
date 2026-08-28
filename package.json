@@ -11,7 +11,7 @@
   },
   "scripts": {
     "dev": "npm run dev --workspace @stack-sentry/web",
-    "build": "npm run build --workspace @stack-sentry/web",
+    "build": "npm run build --workspace @stack-sentry/web && node scripts/sync-next-output.mjs",
     "start": "npm run start --workspace @stack-sentry/web",
     "lint": "npm run lint --workspace @stack-sentry/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
