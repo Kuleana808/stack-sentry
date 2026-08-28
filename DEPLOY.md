@@ -16,26 +16,45 @@ Vercel project.
 
 ## Project settings
 
-Confirm these on https://vercel.com/brent-akamines-projects/stack-sentry
-under **Settings → General → Build & Development Settings**. Turn **off**
-any override that does not match this table — a leftover Output Directory of
-`public` is what produced `No Output Directory named "public" found` after a
-green `next build`.
+The Next app is `apps/web`. Vercel must use that as Root Directory so the
+Next.js builder looks for `.next` at `apps/web/.next`, not the repo root.
+`rootDirectory` and `sourceFilesOutsideRootDirectory` are dashboard settings
+(they cannot be set in `vercel.json`).
+
+Confirm on https://vercel.com/brent-akamines-projects/stack-sentry under
+**Settings → General**:
 
 | Setting | Value |
 |---|---|
-| Framework Preset | **Next.js** (`vercel.json` sets `"framework": "nextjs"`) |
-| Root Directory | repository root (blank / `.`) |
-| Install Command | `npm ci` |
-| Build Command | `npm run build` |
-| Output Directory | **do not set / do not override** (Next.js uses `.next`) |
+| Framework Preset | **Next.js** |
+| Root Directory | **`apps/web`** |
+| Include source files outside the Root Directory | **On** (`sourceFilesOutsideRootDirectory`) |
+| Install Command | `cd ../.. && npm ci` |
+| Build Command | `next build` |
+| Output Directory | **do not set / do not override** |
 | Node.js | **22** |
 
-Do not set `outputDirectory` in `vercel.json` or the dashboard. That switches
-Vercel to the static uploader, which looks for `public`.
+`apps/web/vercel.json` is the file Vercel reads with that Root Directory:
 
-`npm run build` is the workspace script: it builds `@stack-sentry/web` and
-copies `apps/web/.next` to the repo-root `.next` the Next.js builder expects.
+```json
+{
+  "framework": "nextjs",
+  "installCommand": "cd ../.. && npm ci",
+  "buildCommand": "next build"
+}
+```
+
+Install **must** run at the repo root so `@stack-sentry/core` resolves.
+Build **must** run in `apps/web` so `.next` lands where the Next.js builder
+looks (`/vercel/path0/.next` = `apps/web/.next`).
+
+Do not set `outputDirectory`. That switches Vercel to the static uploader
+(`public`). Do not leave Root Directory as `.` with Framework = Next.js —
+`next build` writes `apps/web/.next`, and the builder then errors
+`The Next.js output directory ".next" was not found at "/vercel/path0/.next"`.
+
+Locally, `npm run build` from the repo root is the same workspace build
+(`next build` in `@stack-sentry/web`).
 
 ## What is required to go live
 
@@ -111,11 +130,12 @@ Valid Configuration. Until then, do not advertise a live URL.
 
 On the Vercel build log:
 
-- Framework is Next.js, not Other.
-- Install runs `npm ci` at the repository root.
-- Build runs `npm run build` and lists `○ /`, `○ /pricing`, `○ /about`,
-  `○ /book-a-call`.
-- The deploy does **not** look for a `public` output directory.
+- Root Directory is `apps/web`; framework is Next.js, not Other.
+- Install runs `cd ../.. && npm ci` (workspace install at the repo root).
+- Build runs `next build` in `apps/web` and lists `○ /`, `○ /pricing`,
+  `○ /about`, `○ /book-a-call`.
+- The deploy does **not** look for a `public` output directory, and does
+  **not** look for `.next` at the repository root.
 
 Locally, the same check is `npm ci && npm run build` from the repo root,
 with no `.env`.
