@@ -20,6 +20,12 @@ describe('getSupabasePublicEnv', () => {
     expect(getSupabasePublicEnv()).toBeNull()
   })
 
+  it('treats whitespace-only values as missing', () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = '  '
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'anon-key'
+    expect(getSupabasePublicEnv()).toBeNull()
+  })
+
   it('returns both values only when they are set', () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co'
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'anon-key'
@@ -36,6 +42,10 @@ describe('isProtectedPath', () => {
   it('matches app surfaces and leaves marketing public', () => {
     expect(isProtectedPath('/dashboard')).toBe(true)
     expect(isProtectedPath('/admin/pilots')).toBe(true)
+    expect(isProtectedPath('/integrations')).toBe(true)
+    expect(isProtectedPath('/repairs')).toBe(true)
+    expect(isProtectedPath('/settings')).toBe(true)
+    expect(isProtectedPath('/dashboard-foo')).toBe(false)
     expect(isProtectedPath('/')).toBe(false)
     expect(isProtectedPath('/pricing')).toBe(false)
     expect(isProtectedPath('/about')).toBe(false)

@@ -1,18 +1,18 @@
 # Deploy Stack Sentry (marketing first)
 
-The Vercel project **stack-sentry** now exists on team **brent-akamines-projects**
-and is linked to `Kuleana808/stack-sentry`. Preview deploys from this PR are
-Ready (behind Vercel SSO). That is not a public site.
+Vercel project **stack-sentry** on team **brent-akamines-projects** is linked to
+`Kuleana808/stack-sentry`. Root Directory is `apps/web`, framework is Next.js.
+Production is **https://stack-sentry.vercel.app**.
 
-`https://stacksentry.xyz` is **not** live. As of 2026-08-28, public DNS is still
-Porkbun parking (`207.207.210.107` / `207.207.210.229`, `www` →
-`pixie.porkbun.com`). HTTPS fails with a TLS handshake error. Do not advertise
-that hostname until a production deploy is green and the records below have
-propagated.
+`stacksentry.xyz` is attached to that project. It is not serving the app until
+Porkbun points the apex at Vercel — public DNS is still parking
+(`207.207.210.107` / `207.207.210.229`). HTTPS handshake-fails. Do not invent
+another live URL.
 
-If the domain is attached to another Vercel project (including a leftover
-project named `site`), remove it there first. A hostname can only belong to one
-Vercel project.
+Marketing pages must render with **no** `NEXT_PUBLIC_SUPABASE_*` keys. Do not
+add placeholder Supabase credentials. Middleware skips the Supabase client when
+those vars are unset and does not run on `/`, `/pricing`, `/about`, or
+`/book-a-call`.
 
 ## Project settings
 
@@ -102,29 +102,18 @@ not fail `next build`.
 
 ## DNS for stacksentry.xyz
 
-After the Vercel project exists, add **both** hostnames on that project's
-**Settings → Domains**: `stacksentry.xyz` and `www.stacksentry.xyz`. Then at
-Porkbun (current nameservers: `curitiba` / `fortaleza` / `maceio` /
-`salvador.ns.porkbun.com`) replace the parking records:
+The domain is already attached on the Vercel project. At Porkbun, nameservers
+are `curitiba` / `fortaleza` / `maceio` / `salvador.ns.porkbun.com`. Replace
+the parking A records (`207.207.210.*`) with:
 
 | Type | Host | Value |
 |---|---|---|
-| A | `@` (apex) | `76.76.21.21` |
-| CNAME | `www` | `cname.vercel-dns.com` |
+| A | `stacksentry.xyz` (`@`) | `76.76.21.21` |
+| CNAME | `www` | `cname.vercel-dns.com` (or the target on the Vercel domain card) |
 
-`76.76.21.21` is Vercel's documented apex address. The www CNAME is often
-`cname.vercel-dns.com`; some projects show a unique
-`*.vercel-dns-017.com` target on the domain card. **Use the values Vercel
-prints for this project** if they differ.
-
-Remove the existing apex A records (`207.207.210.*`) and the `www` CNAME to
-`pixie.porkbun.com` or verification will stay invalid.
-
-Do not put a CNAME on the apex (conflicts with NS/MX). Keep Porkbun
-nameservers if you have email or other records there.
-
-Vercel will issue SSL after the records propagate and the domain card shows
-Valid Configuration. Until then, do not advertise a live URL.
+Do not put a CNAME on the apex. Keep those Porkbun nameservers if you have
+MX or other records there. SSL is issued after the A record is `76.76.21.21`
+and the domain card shows Valid Configuration.
 
 ## Verify a deploy
 
@@ -136,6 +125,10 @@ On the Vercel build log:
   `○ /about`, `○ /book-a-call`.
 - The deploy does **not** look for a `public` output directory, and does
   **not** look for `.next` at the repository root.
+
+After this middleware fix is on production, `https://stack-sentry.vercel.app/`
+should be 200 with no Supabase env. `https://stacksentry.xyz` stays a TLS
+error until the Porkbun A record is `76.76.21.21`.
 
 Locally, the same check is `npm ci && npm run build` from the repo root,
 with no `.env`.
