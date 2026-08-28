@@ -11,6 +11,7 @@ import {
   type ConnectionStatus,
 } from '@stack-sentry/core'
 import { createClient } from '@/lib/supabase/server'
+import { isSupabasePublicConfigured } from '@/lib/supabase/env'
 
 /**
  * Contract 4 — GET /api/stacks/:id/health
@@ -33,6 +34,12 @@ const EMPTY_SUMMARY: Record<AutomationState, number> = {
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params
+
+  if (!isSupabasePublicConfigured()) {
+    return NextResponse.json(notConfigured('Supabase auth is not configured in this environment.'), {
+      status: 503,
+    })
+  }
 
   const supabase = await createClient()
   const {

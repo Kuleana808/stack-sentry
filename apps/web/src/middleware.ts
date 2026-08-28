@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { getSupabasePublicEnv, isProtectedPath } from '@/lib/supabase/env'
 
 /**
  * Refreshes the Supabase session cookie on every request, and keeps signed-out
@@ -7,46 +8,56 @@ import { createServerClient } from '@supabase/ssr'
  *
  * This is a convenience gate, not the security boundary — RLS is. A request
  * that slipped past here still cannot read another tenant's rows.
+ *
+ * When public Supabase env is absent (marketing-only deploy), skip the client
+ * entirely so `/`, `/pricing`, `/about`, and `/book-a-call` still render.
+ * Protected paths redirect to login rather than 500.
  */
-const PROTECTED = ['/dashboard', '/integrations', '/repairs', '/settings', '/admin']
-
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request })
+  const { pathname, search } = request.nextUrl
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          response = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options),
-          )
-        },
+  const env = getSupabasePublicEnv()
+  if (!env) {
+    if (isProtectedPath(pathname)) {
+      return redirectToLogin(request, pathname, search)
+    }
+    return response
+  }
+
+  const supabase = createServerClient(env.url, env.anonKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll()
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+        response = NextResponse.next({ request })
+        cookiesToSet.forEach(({ name, value, options }) =>
+          response.cookies.set(name, value, options),
+        )
       },
     },
-  )
+  })
 
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const { pathname, search } = request.nextUrl
-  if (!user && PROTECTED.some((prefix) => pathname.startsWith(prefix))) {
-    const loginUrl = new URL('/login', request.url)
-    // Carry the query string, not just the path. The OAuth callback lands on
-    // /dashboard?connect=…&reason=… and if the session is not live yet, dropping
-    // the search would silently discard the outcome of the connect attempt.
-    loginUrl.searchParams.set('next', `${pathname}${search}`)
-    return NextResponse.redirect(loginUrl)
+  if (!user && isProtectedPath(pathname)) {
+    return redirectToLogin(request, pathname, search)
   }
 
   return response
+}
+
+function redirectToLogin(request: NextRequest, pathname: string, search: string) {
+  const loginUrl = new URL('/login', request.url)
+  // Carry the query string, not just the path. The OAuth callback lands on
+  // /dashboard?connect=…&reason=… and if the session is not live yet, dropping
+  // the search would silently discard the outcome of the connect attempt.
+  loginUrl.searchParams.set('next', `${pathname}${search}`)
+  return NextResponse.redirect(loginUrl)
 }
 
 export const config = {

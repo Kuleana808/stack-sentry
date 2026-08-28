@@ -27,6 +27,15 @@ npm run test
 npm run build
 ```
 
+## Deploy
+
+Production is a Vercel project that has not been created yet. Marketing routes
+(`/`, `/pricing`, `/about`, `/book-a-call`) build with no backend secrets.
+
+See [DEPLOY.md](DEPLOY.md) for project settings, required vs optional env, and
+the DNS records for `stacksentry.xyz`. Do not assume that hostname is serving
+this app until those steps are done.
+
 ## Layout
 
 npm workspaces. Two packages.

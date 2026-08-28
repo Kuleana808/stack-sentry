@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import { capture, liveVerified, failed, VISITOR_COOKIE, type AnalyticsEvent } from '@stack-sentry/core'
 import { createClient } from '@/lib/supabase/server'
+import { isSupabasePublicConfigured } from '@/lib/supabase/env'
 import { ensureAnalyticsSink } from '@/lib/analytics-sink'
 
 /**
@@ -56,18 +57,26 @@ export async function POST(request: Request) {
 
   ensureAnalyticsSink()
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let userId: string | undefined
+  if (isSupabasePublicConfigured()) {
+    try {
+      const supabase = await createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      userId = user?.id
+    } catch {
+      userId = undefined
+    }
+  }
 
   const visitorId =
-    readCookie(request.headers.get('cookie'), VISITOR_COOKIE) ?? user?.id ?? randomUUID()
+    readCookie(request.headers.get('cookie'), VISITOR_COOKIE) ?? userId ?? randomUUID()
 
   await capture({
     event,
-    distinctId: user?.id ?? visitorId,
-    properties: { ...parsed.data.properties, anonymous: !user },
+    distinctId: userId ?? visitorId,
+    properties: { ...parsed.data.properties, anonymous: !userId },
   })
 
   return NextResponse.json(liveVerified({ recorded: true }))

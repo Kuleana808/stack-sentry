@@ -1,5 +1,6 @@
 import 'server-only'
 import { createClient } from '@/lib/supabase/server'
+import { isSupabasePublicConfigured } from '@/lib/supabase/env'
 import { createAdminClient } from '@stack-sentry/core/supabase'
 
 /**
@@ -19,6 +20,8 @@ export interface AdminIdentity {
 }
 
 export async function requireAdmin(): Promise<AdminIdentity | null> {
+  if (!isSupabasePublicConfigured()) return null
+
   const supabase = await createClient()
   const {
     data: { user },

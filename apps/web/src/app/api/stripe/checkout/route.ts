@@ -9,6 +9,7 @@ import {
   type CheckoutResult,
 } from '@stack-sentry/core'
 import { createClient } from '@/lib/supabase/server'
+import { isSupabasePublicConfigured } from '@/lib/supabase/env'
 import { getStripe, resolvePriceId } from '@/lib/stripe'
 
 /**
@@ -26,6 +27,12 @@ const Body = z.object({
 })
 
 export async function POST(request: Request) {
+  if (!isSupabasePublicConfigured()) {
+    return NextResponse.json(notConfigured('Supabase auth is not configured in this environment.'), {
+      status: 503,
+    })
+  }
+
   const supabase = await createClient()
   const {
     data: { user },
